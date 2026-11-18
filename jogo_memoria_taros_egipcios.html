@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="tool">
+  <meta name="design-style" content="nocturne">
+  <title>Os Tarôs Egípcios — Jogo da Memória &amp; Síntese dos Arcanos</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+
+      /* Nocturne: Prussian midnight steps */
+      --background: #0a101d;
+      --surface-container-low: #0e1626;
+      --surface-container: #111b2e;
+      --surface-container-high: #17243c;
+
+      /* Text */
+      --on-surface: #f2ece1;
+      --on-surface-variant: #9ba8bf;
+
+      /* Borders */
+      --outline: #384d73;
+      --outline-variant: #21304d;
+
+      /* Accents */
+      --primary: #dfaa5b;
+      --on-primary: #0a101d;
+      --primary-container: #2b261c;
+      --on-primary-container: #f5dcb0;
+      --secondary: #687a99;
+      --tertiary: #7cc4e8;
+      --error: #f27474;
+      --on-error: #1a0606;
+
+      /* Data series */
+      --data-1: #dfaa5b;
+      --data-2: #7cc4e8;
+      --data-3: #52d19c;
+      --data-4: #e07a5f;
+      --data-context: #4a5d80;
+
+      /* Fonts */
+      --font-headline: 'EB Garamond', serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-label: 'JetBrains Mono', monospace;
+
+      /* Shape */
+      --rounded: 0.25rem;
+      --rounded-lg: 0.375rem;
+      --rounded-full: 9999px;
+
+      /* Style effects */
+      --hairline: 1px solid var(--outline-variant);
+      --hairline-strong: 1px solid var(--outline);
+      --panel-highlight: inset 0 1px 0 rgba(242, 236, 225, 0.05);
+      --brass-glow: radial-gradient(circle at 88% 12%, rgba(223, 170, 91, 0.08), transparent 45%);
+      --brass-glow-soft: radial-gradient(circle at 50% 0%, rgba(223, 170, 91, 0.06), transparent 60%);
+      --heading-tracking: -0.015em;
+      --label-tracking: 0.06em;
+      --sky-tint: color-mix(in srgb, var(--tertiary) 12%, transparent);
+      --sky-border: color-mix(in srgb, var(--tertiary) 35%, transparent);
+      --brass-tint: color-mix(in srgb, var(--primary) 14%, transparent);
+      --brass-border: color-mix(in srgb, var(--primary) 42%, transparent);
+      --positive-tint: color-mix(in srgb, var(--positive) 14%, transparent);
+      --positive-border: color-mix(in srgb, var(--positive) 38%, transparent);
+
+      /* Shared semantic & focus */
+      --positive: #52d19c;
+      --warning: #dfaa5b;
+      --focus: var(--primary);
+
+      /* Type scale (Focused Tool + Editorial Reading Fold) */
+      --display-size: clamp(1.75rem, 1.35rem + 1.4vw, 2.5rem);
+      --headline-size: clamp(1.45rem, 1.15rem + 1vw, 2.125rem);
+      --subhead-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+      --body-size: clamp(0.9375rem, 0.9rem + 0.18vw, 1.03125rem);
+      --label-size: 0.75rem;
+
+      /* Spacing scale (4pt base) */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+      --space-3xl: 6rem;
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+      --dur-long: 420ms;
+
+      /* Board grid geometry */
+      --grid-cols: 4;
+      --grid-rows: 3;
+      --grid-max-w: 740px;
+    }
+
+    /* Base reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html {
+      scroll-behavior: smooth;
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: static !important; }
+    button, input, select, textarea { font-family: inherit; }
+
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    /* Typography helpers */
+    .title {
+      font-family: var(--font-headline);
+      font-weight: 500;
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.08;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .title em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--primary);
+    }
+    .deck-brass {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--primary);
+      margin: 0;
+    }
+    .coord-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--tertiary);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: var(--sky-tint);
+      color: var(--tertiary);
+      border: 1px solid var(--sky-border);
+      border-radius: var(--rounded);
+      padding: var(--space-xs) var(--space-sm);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .badge-brass {
+      background: var(--brass-tint);
+      color: var(--primary);
+      border-color: var(--brass-border);
+    }
+    .badge-positive {
+      background: var(--positive-tint);
+      color: var(--positive);
+      border-color: var(--positive-border);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--rounded);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 500;
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      cursor: pointer;
+      border: var(--hairline-strong);
+      background: transparent;
+      color: var(--on-surface);
+      transition: background-color var(--dur-short) var(--ease-out),
+                  border-color var(--dur-short) var(--ease-out),
+                  color var(--dur-short) var(--ease-out),
+                  transform var(--dur-micro) var(--ease-out);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) {
+      background-color: var(--surface-container-high);
+      border-color: var(--primary);
+    }
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--on-primary-container);
+      border-color: var(--on-primary-container);
+      color: var(--on-primary);
+    }
+    .btn-sky {
+      background-color: var(--sky-tint);
+      color: var(--tertiary);
+      border-color: var(--sky-border);
+    }
+    .btn-sky:hover:not(:disabled) {
+      background-color: var(--surface-container-high);
+      border-color: var(--tertiary);
+    }
+    .btn-chip {
+      min-height: 36px;
+      padding: var(--space-xs) var(--space-sm);
+      font-size: var(--label-size);
+      border-color: var(--outline-variant);
+      color: var(--on-surface-variant);
+    }
+    .btn-chip.is-active {
+      background-color: var(--brass-tint);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--surface-container);
+      border: var(--hairline);
+      box-shadow: var(--panel-highlight);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+    }
+    .observation-well {
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+    }
+
+    /* ============================================================
+       FIRST FOLD: 100vh FULLSCREEN GAME BOARD
+       ============================================================ */
+    .fold-board {
+      min-height: 100vh;
+      min-height: 100svh;
+      background-color: var(--background);
+      background-image: var(--brass-glow);
+      border-bottom: var(--hairline);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      padding: var(--space-md) var(--space-lg);
+      gap: var(--space-md);
+      position: relative;
+    }
+
+    @media (min-width: 769px) and (min-height: 620px) {
+      .fold-board {
+        height: 100vh;
+        height: 100svh;
+      }
+    }
+
+    .board-header {
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: var(--space-md) var(--space-lg);
+      padding-bottom: var(--space-sm);
+      border-bottom: var(--hairline);
+    }
+    .board-brand {
+      min-width: 0;
+    }
+    .board-title {
+      font-size: var(--display-size);
+      margin-top: var(--space-xs);
+    }
+    .board-lede {
+      margin: var(--space-xs) 0 0;
+      color: var(--on-surface-variant);
+      font-size: 0.9rem;
+      max-width: 60ch;
+    }
+
+    .board-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: flex-end;
+      gap: var(--space-sm) var(--space-md);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .control-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+    }
+    .segmented-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      align-items: center;
+    }
+    .segmented-row .btn-chip {
+      min-height: 44px;
+      padding: var(--space-xs) var(--space-sm);
+    }
+
+    .telemetry-strip {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      background: var(--surface-container-low);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-xs) var(--space-md);
+      min-height: 44px;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+    .stat-key {
+      font-family: var(--font-label);
+      font-size: 0.6875rem;
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+    }
+    .stat-val {
+      font-family: var(--font-label);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--on-surface);
+    }
+    .stat-val.accent {
+      color: var(--primary);
+    }
+
+    /* Game Stage */
+    .board-stage {
+      min-height: 0;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .memory-grid {
+      width: 100%;
+      max-width: var(--grid-max-w);
+      height: 100%;
+      max-height: 100%;
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+      grid-template-rows: repeat(var(--grid-rows), minmax(0, 1fr));
+      gap: var(--space-sm);
+      perspective: 1200px;
+    }
+
+    /* Card Tile */
+    .tarot-card {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 82px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform var(--dur-long) var(--ease-out);
+      border-radius: var(--rounded-lg);
+      container-type: size;
+    }
+    .tarot-card::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      z-index: 30;
+      width: max-content;
+      max-width: min(240px, 70vw);
+      transform: translateX(-50%) translateY(4px) rotateY(180deg);
+      padding: 7px 10px;
+      border: 1px solid var(--brass-border);
+      border-radius: var(--rounded);
+      background: var(--surface-container-high);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+      color: var(--on-surface);
+      font-family: var(--font-label);
+      font-size: 0.6875rem;
+      line-height: 1.35;
+      letter-spacing: 0.02em;
+      text-align: center;
+      white-space: normal;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--dur-short) var(--ease-out),
+                  transform var(--dur-short) var(--ease-out),
+                  visibility var(--dur-short) var(--ease-out);
+    }
+    .tarot-card.is-flipped:hover::after,
+    .tarot-card.is-flipped:focus-visible::after,
+    .tarot-card.is-matched:hover::after,
+    .tarot-card.is-matched:focus-visible::after {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0) rotateY(180deg);
+    }
+    .tarot-card:hover:not(.is-flipped):not(.is-matched) .card-back {
+      border-color: var(--primary);
+      background-color: var(--surface-container-high);
+      transform: translateY(-2px);
+    }
+    .tarot-card.is-flipped,
+    .tarot-card.is-matched {
+      transform: rotateY(180deg);
+    }
+    .tarot-card.is-matched {
+      cursor: pointer;
+    }
+    .tarot-card.is-mismatch .card-front {
+      border-color: var(--error);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: var(--rounded-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: border-color var(--dur-short) var(--ease-out),
+                  background-color var(--dur-short) var(--ease-out),
+                  transform var(--dur-short) var(--ease-out);
+    }
+
+    .card-back {
+      background-color: var(--surface-container);
+      border: var(--hairline-strong);
+      box-shadow: var(--panel-highlight);
+      padding: var(--space-xs);
+    }
+    .card-back-inner {
+      width: 100%;
+      height: 100%;
+      border: 1px dashed var(--outline-variant);
+      border-radius: var(--rounded);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-xs);
+      color: var(--primary);
+    }
+    .card-back-svg {
+      width: clamp(24px, 32cqw, 52px);
+      height: auto;
+      opacity: 0.9;
+    }
+    .card-back-mark {
+      font-family: var(--font-label);
+      font-size: clamp(0.625rem, 6cqh, 0.75rem);
+      letter-spacing: var(--label-tracking);
+      color: var(--on-surface-variant);
+      text-transform: uppercase;
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+      background-color: var(--surface-container-low);
+      border: 1px solid var(--brass-border);
+      box-shadow: var(--panel-highlight);
+      padding: clamp(4px, 3cqh, 10px);
+      justify-content: space-between;
+      gap: 2px;
+    }
+    .tarot-card.is-matched .card-front {
+      background-color: var(--primary-container);
+      border-color: var(--primary);
+    }
+    .tarot-card.is-selected-match .card-front {
+      border-width: 2px;
+      border-color: var(--tertiary);
+    }
+
+    .card-front-top {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-label);
+      font-size: clamp(0.625rem, 7cqh, 0.75rem);
+      letter-spacing: 0.04em;
+      color: var(--primary);
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .card-front-glyph {
+      color: var(--tertiary);
+      font-size: clamp(0.625rem, 6.5cqh, 0.75rem);
+    }
+    .card-front-art {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-front-art svg {
+      max-height: 100%;
+      max-width: 100%;
+      width: auto;
+      height: 100%;
+    }
+    .card-front-art img {
+      max-height: 100%;
+      max-width: 100%;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: var(--rounded);
+    }
+    .card-front-title {
+      font-family: var(--font-headline);
+      font-size: clamp(0.6875rem, 8cqh, 0.9375rem);
+      font-weight: 500;
+      color: var(--on-surface);
+      line-height: 1.12;
+      text-align: center;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      padding: 0 2px;
+    }
+
+    /* First-fold footer strip */
+    .board-footer {
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-sm) var(--space-md);
+      padding-top: var(--space-sm);
+      border-top: var(--hairline);
+    }
+    .status-readout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      min-width: 0;
+      flex: 1 1 320px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: var(--rounded-full);
+      background-color: var(--secondary);
+      flex: 0 0 auto;
+    }
+    .status-dot.is-match {
+      background-color: var(--positive);
+    }
+    .status-dot.is-win {
+      background-color: var(--primary);
+    }
+    .status-text {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .status-text strong {
+      color: var(--on-surface);
+      font-weight: 600;
+    }
+    .footer-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
+
+    /* ============================================================
+       SECOND FOLD: EXPLANATION, SYNTHESIS & CODEX OF THE 22 ARCANOS
+       ============================================================ */
+    .fold-explanation {
+      background-color: var(--surface-container-low);
+      background-image: var(--brass-glow-soft);
+      padding: var(--space-2xl) var(--space-lg) var(--space-3xl);
+    }
+    .page-grid {
+      display: grid;
+      gap: var(--space-xl);
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+    .page-grid * { min-width: 0; }
+
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: var(--space-md) var(--space-lg);
+      padding-bottom: var(--space-md);
+      border-bottom: var(--hairline);
+    }
+    .section-title {
+      font-size: var(--headline-size);
+      margin-top: var(--space-xs);
+    }
+    .section-intro {
+      margin: var(--space-sm) 0 0;
+      max-width: 65ch;
+      color: var(--on-surface-variant);
+    }
+
+    /* Active Arcano Reading Panel */
+    .reading-panel {
+      background: var(--surface-container);
+      border: var(--hairline-strong);
+      box-shadow: var(--panel-highlight);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-xl);
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      gap: var(--space-xl);
+      align-items: start;
+    }
+
+    .reading-empty {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-md);
+      padding: var(--space-md) 0;
+    }
+    .reading-empty h3 {
+      font-family: var(--font-headline);
+      font-size: var(--subhead-size);
+      font-weight: 500;
+      margin: 0;
+      color: var(--on-surface);
+    }
+    .reading-empty p {
+      margin: 0;
+      max-width: 62ch;
+      color: var(--on-surface-variant);
+    }
+
+    .reading-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+    }
+    .reading-cartouche-box {
+      width: 100%;
+      max-width: 190px;
+      aspect-ratio: 120 / 190;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reading-cartouche-box svg {
+      width: 100%;
+      height: 100%;
+    }
+    .reading-cartouche-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: var(--rounded);
+    }
+    .reading-meta-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      border-top: var(--hairline);
+      padding-top: var(--space-sm);
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-sm);
+      font-size: 0.8125rem;
+    }
+    .meta-row span:first-child {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+    }
+    .meta-row span:last-child {
+      color: var(--tertiary);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-align: right;
+    }
+
+    .reading-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+    .reading-head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .reading-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      align-items: center;
+    }
+    .reading-title {
+      font-size: var(--headline-size);
+      margin-top: var(--space-xs);
+    }
+
+    .synthesis-callout {
+      background: var(--primary-container);
+      border: 1px solid var(--brass-border);
+      border-left: 3px solid var(--primary);
+      border-radius: var(--rounded);
+      padding: var(--space-md) var(--space-lg);
+    }
+    .synthesis-callout .deck-brass {
+      margin-bottom: var(--space-xs);
+    }
+    .synthesis-callout p {
+      margin: 0;
+      color: var(--on-primary-container);
+      font-size: 1.03125rem;
+      line-height: 1.55;
+      max-width: 65ch;
+    }
+
+    .symbols-block h4,
+    .explanation-block h4 {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--tertiary);
+      margin: 0 0 var(--space-sm);
+    }
+    .symbol-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .symbol-chips li {
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-xs) var(--space-sm);
+      font-size: 0.875rem;
+      color: var(--on-surface);
+    }
+    .explanation-block p {
+      margin: 0 0 var(--space-md);
+      max-width: 65ch;
+      color: var(--on-surface);
+      line-height: 1.65;
+    }
+    .explanation-block p:last-child {
+      margin-bottom: 0;
+    }
+    .reading-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      padding-top: var(--space-md);
+      border-top: var(--hairline);
+    }
+
+    /* Codex Grid of all 22 Arcanos */
+    .codex-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+    .codex-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-md);
+    }
+    .codex-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+      gap: var(--space-md);
+    }
+    .codex-item {
+      background: var(--surface-container);
+      border: var(--hairline);
+      box-shadow: var(--panel-highlight);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md);
+      display: flex;
+      gap: var(--space-md);
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+      color: var(--on-surface);
+      transition: background-color var(--dur-short) var(--ease-out),
+                  border-color var(--dur-short) var(--ease-out),
+                  transform var(--dur-micro) var(--ease-out);
+      min-height: 84px;
+    }
+    .codex-item:hover {
+      background: var(--surface-container-high);
+      border-color: var(--outline);
+      transform: translateY(-2px);
+    }
+    .codex-item.is-current {
+      border-color: var(--primary);
+      background: var(--primary-container);
+    }
+    .codex-item.is-veiled {
+      opacity: 0.76;
+    }
+    .codex-thumb {
+      width: 46px;
+      height: 72px;
+      flex: 0 0 auto;
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px;
+    }
+    .codex-thumb svg {
+      width: 100%;
+      height: 100%;
+    }
+    .codex-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: var(--rounded);
+    }
+    .codex-info {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .codex-num {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .codex-name {
+      font-family: var(--font-headline);
+      font-size: 1.0625rem;
+      font-weight: 500;
+      line-height: 1.2;
+      color: var(--on-surface);
+    }
+    .codex-astro {
+      font-size: 0.78rem;
+      color: var(--on-surface-variant);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Historical & Symbolic Context Strip */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+      gap: var(--space-lg);
+    }
+    .note-card h3 {
+      font-family: var(--font-headline);
+      font-size: var(--subhead-size);
+      font-weight: 500;
+      margin: var(--space-xs) 0 var(--space-sm);
+      color: var(--on-surface);
+    }
+    .note-card p {
+      margin: 0;
+      font-size: 0.9375rem;
+      color: var(--on-surface-variant);
+      max-width: 65ch;
+      line-height: 1.6;
+    }
+
+    .source-footer {
+      border-top: var(--hairline);
+      padding-top: var(--space-lg);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-md);
+      color: var(--on-surface-variant);
+      font-size: 0.875rem;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 900px) {
+      .reading-panel {
+        grid-template-columns: 1fr;
+      }
+      .reading-visual {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+      .reading-cartouche-box {
+        max-width: 130px;
+      }
+      .reading-meta-list {
+        flex: 1 1 200px;
+        border-top: none;
+        padding-top: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .board-header {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      .board-controls {
+        justify-content: flex-start;
+      }
+      .memory-grid {
+        gap: var(--space-xs);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .fold-board {
+        padding: var(--space-sm) var(--space-md);
+      }
+      .fold-explanation {
+        padding: var(--space-xl) var(--space-md) var(--space-2xl);
+      }
+      .reading-panel {
+        padding: var(--space-md);
+      }
+      .status-text {
+        white-space: normal;
+      }
+      .telemetry-strip {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       PRIMEIRA DOBRA (100vh): TABULEIRO INTERATIVO DE MEMÓRIA
+       ============================================================ -->
+  <section class="fold-board" id="tabuleiro-dobra" aria-label="Tabuleiro do Jogo da Memória dos Tarôs Egípcios">
+    <header class="board-header">
+      <div class="board-brand">
+        <p class="deck-brass">Salão das Imagens · 22 Arcanos Egípcios</p>
+        <h1 class="title board-title">Os Tarôs <em>Egípcios</em></h1>
+        <p class="board-lede">Combine pares idênticos de cartuchos para desvelar o significado e a síntese do arcano na dobra inferior.</p>
+      </div>
+
+      <div class="board-controls">
+        <div class="control-group">
+          <span class="control-label" id="label-modo">Ciclo do Tabuleiro</span>
+          <div class="segmented-row" role="group" aria-labelledby="label-modo">
+            <button type="button" class="btn btn-chip is-active" data-pairs="6" onclick="setBoardMode(6)">6 Pares</button>
+            <button type="button" class="btn btn-chip" data-pairs="8" onclick="setBoardMode(8)">8 Pares</button>
+            <button type="button" class="btn btn-chip" data-pairs="12" onclick="setBoardMode(12)">12 Pares</button>
+            <button type="button" class="btn btn-chip" data-pairs="22" onclick="setBoardMode(22)">22 Pares</button>
+          </div>
+        </div>
+
+        <div class="telemetry-strip" aria-live="polite">
+          <div class="stat-item">
+            <span class="stat-key">Pares</span>
+            <span class="stat-val accent" id="stat-pairs">0 / 6</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-key">Jogadas</span>
+            <span class="stat-val" id="stat-moves">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-key">Tempo</span>
+            <span class="stat-val" id="stat-timer">00:00</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn" onclick="startNewGame()" aria-label="Embaralhar e iniciar nova partida">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 16h5v5"/>
+          </svg>
+          Embaralhar
+        </button>
+      </div>
+    </header>
+
+    <main class="board-stage">
+      <div class="memory-grid" id="memory-grid" role="grid" aria-label="Cartas dos Tarôs Egípcios"></div>
+    </main>
+
+    <footer class="board-footer">
+      <div class="status-readout" aria-live="polite">
+        <span class="status-dot" id="status-dot" aria-hidden="true"></span>
+        <p class="status-text" id="board-status-text">Vire duas cartas para iniciar. Cada par combinado exibe seu arcano abaixo.</p>
+      </div>
+
+      <div class="footer-actions">
+        <span class="badge badge-brass" id="codex-progress-badge">Desvelados: 0 / 22</span>
+        <button type="button" class="btn btn-primary" id="btn-scroll-meaning" onclick="scrollToExplanation()">
+          Ver Significados
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 5v14"/>
+            <path d="m19 12-7 7-7-7"/>
+          </svg>
+        </button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ============================================================
+       SEGUNDA DOBRA: EXPLICAÇÃO DETALHADA, SÍNTESE E CÓDICE
+       ============================================================ -->
+  <section class="fold-explanation" id="explicacao-arcanos" aria-label="Explicação Detalhada e Síntese dos Arcanos">
+    <div class="page-grid">
+
+      <div class="section-header">
+        <div>
+          <p class="deck-brass">Dobra II · Interpretação Simbólica &amp; Síntese</p>
+          <h2 class="title section-title">Significado dos <em>Arcanos</em></h2>
+          <p class="section-intro">
+            Na tradição egípcia descrita por Plotino, cada tarô sintetiza uma cosmovisão dentro de um cartucho sagrado (<em>ro</em> da cruz ansata Ankh), destinado a vivificar o mistério interior. Ao combinar um par no tabuleiro acima, sua leitura completa é projetada aqui.
+          </p>
+        </div>
+        <button type="button" class="btn" onclick="scrollToBoard()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 19V5"/>
+            <path d="m5 12 7-7 7 7"/>
+          </svg>
+          Voltar ao Tabuleiro
+        </button>
+      </div>
+
+      <!-- Painel Principal do Arcano Selecionado / Combinado -->
+      <article class="reading-panel" id="active-arcano-panel" aria-live="polite">
+        <div class="reading-empty" id="reading-empty-state">
+          <span class="badge">Aguardando Combinação</span>
+          <h3>Nenhum arcano selecionado ainda</h3>
+          <p>
+            Combine duas cartas idênticas no tabuleiro superior para desvelar automaticamente o arcano correspondente nesta área. Você também pode clicar em qualquer carta já combinada no tabuleiro ou escolher um arcano no Códice abaixo para estudar sua síntese.
+          </p>
+          <div class="reading-nav">
+            <button type="button" class="btn btn-primary" onclick="scrollToBoard()">Jogar no Tabuleiro</button>
+            <button type="button" class="btn btn-sky" onclick="inspectArcano(1)">Explorar Tarot nº 1</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Códice Completo dos 22 Arcanos -->
+      <section class="codex-section" aria-label="Códice dos 22 Arcanos">
+        <div class="codex-toolbar">
+          <div>
+            <p class="coord-label">Acervo dos 22 Cartuchos</p>
+            <h3 class="title" style="font-size: var(--subhead-size); margin-top: var(--space-xs);">Códice Completo dos Tarôs</h3>
+          </div>
+          <div class="segmented-row" role="group" aria-label="Filtrar arcanos do códice">
+            <button type="button" class="btn btn-chip is-active" data-filter="all" onclick="setCodexFilter('all')">Todos (22)</button>
+            <button type="button" class="btn btn-chip" data-filter="unlocked" onclick="setCodexFilter('unlocked')">Desvelados no Jogo</button>
+            <button type="button" class="btn btn-chip" data-filter="locked" onclick="setCodexFilter('locked')">Ainda Velados</button>
+          </div>
+        </div>
+
+        <div class="codex-grid" id="codex-grid"></div>
+      </section>
+
+      <!-- Notas Gerais e Tradição Histórica (ST_Taros.pdf) -->
+      <section aria-label="Notas Gerais e Contexto Histórico">
+        <p class="coord-label" style="margin-bottom: var(--space-sm);">Fundamentos do Sistema</p>
+        <div class="notes-grid">
+          <div class="panel note-card">
+            <span class="badge badge-brass">Forma &amp; Simbolismo</span>
+            <h3>O Cartucho e a Ankh</h3>
+            <p>
+              Formalmente, cada tarô compõe-se de um cartucho e uma figura central. O cartucho é a parte superior da cruz ansata (Ankh), chamada <em>ro</em>, em proporção áurea — com a função simbólica de vivificar e conferir vida eterna ou divina ao mistério contido em seu interior.
+            </p>
+          </div>
+
+          <div class="panel note-card">
+            <span class="badge">Arquitetura Sacra</span>
+            <h3>A Sala de Imagens</h3>
+            <p>
+              Segundo a tradição, os templos egípcios possuíam uma Sala de Imagens. Orifícios intencionais nos tetos conduziam raios de luz solar, como lanternas, para iluminar setores específicos de murais segundo a hora e a época do ano.
+            </p>
+          </div>
+
+          <div class="panel note-card">
+            <span class="badge">Chaves de Leitura</span>
+            <h3>Astrologia e Vestimentas</h3>
+            <p>
+              Há correspondência direta entre os signos astrológicos no topo do cartucho e os elementos da cena central. As geometrizações dos peplos guardam sentido mágico, e os signos fora do cartucho — no canto inferior direito — são letras hebraicas não interpretadas nesta síntese.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="source-footer">
+        <span>Fonte: manuscrito de cátedra «Os Tarots» (ST_Taros.pdf) e gravuras da edição francesa limitada <em>Les Tarots Adivinatoires</em> (1896).</span>
+        <button type="button" class="btn btn-chip" id="btn-reset-codex" onclick="resetCodexProgress(this)">Zerar Histórico Desvelado</button>
+      </footer>
+    </div>
+  </section>
+
+  <api-shim></api-shim>
+
+  <script>
+    /* =========================================================================
+       DADOS DOS 22 ARCANOS EGÍPCIOS (Baseados estritamente em ST_Taros.pdf)
+       ========================================================================= */
+    const ARCANOS = [
+      {
+        id: 1,
+        numero: `Tarot nº 1`,
+        titulo: `As Duas Pirâmides e o Crepúsculo`,
+        regencia: `Vênus · Aquário · Escorpião`,
+        glyph: `♀ ♒ ♏`,
+        sintese: `A dualidade dos Mistérios Noturnos: somente a pirâmide branca — o caminho da «mão direita» — possui porta de acesso, exigindo a morte da personalidade inferior para o despertar espiritual.`,
+        simbolos: [
+          `Lua semicoberta por nuvens`,
+          `Pirâmide branca com porta e pirâmide preta fechada`,
+          `Dois chacais (branco e preto alternados)`,
+          `Signos de Vênus (Ankh) e Aquário`,
+          `Escorpião na base`
+        ],
+        explicacao: [
+          `A lua semicoberta num céu plenamente escuro simboliza a luta entre o brilho solar e as forças que buscam encobri-lo — a mesma dualidade expressa nas duas pirâmides e nos dois chacais de cores alternadas. Apenas a pirâmide branca apresenta uma porta, indicando que somente o caminho da «mão direita» oferece entrada real, enquanto a entrada na pirâmide preta é fechada ou ilusória.`,
+          `Sobre a pirâmide branca figuram o signo de Vênus (semelhante a uma Ankh, símbolo da vida eterna entregue pelos Pitris Manasa) e o signo de Aquário (as Águas Primordiais, a mais pura representação da matéria). O escorpião inferior representa a destruição da personalidade que permite o nascimento do homem superior; os Mistérios Noturnos são esotéricos e ocultos, pois somente quando o sol se oculta revelam-se as estrelas distantes.`
+        ]
+      },
+      {
+        id: 2,
+        numero: `Tarot nº 2`,
+        titulo: `O Eclipse e o Crocodilo`,
+        regencia: `Eclipse Solar · Thot & Seth`,
+        glyph: `◐ 🐊`,
+        sintese: `Quando a humanidade mergulha na materialidade (Kali Yuga), perde o contato com a guia divina e caminha cega em direção à destruição devoradora do tempo.`,
+        simbolos: [
+          `Eclipse solar em curso`,
+          `Caminhante cego com duas bolsas no ombro`,
+          `Báculo apoiado atrás do corpo`,
+          `Mandíbulas abertas de um crocodilo`,
+          `Coluna caída com hieróglifos`
+        ],
+        explicacao: [
+          `Um eclipse em avanço até a totalidade marca o escurecimento espiritual. O homem cego caminha rumo às mandíbulas do crocodilo — símbolo do tempo — carregando duas bolsas nos ombros, que equilibram boas e más ações tendo a humanidade como fiel da balança cósmica.`,
+          `O báculo, que deveria servir de guia e apoio, é arrastado atrás do corpo como peso inútil: não são os deuses que se afastam, mas a humanidade que perde a capacidade de alcançá-los ao submergir nos abismos. A coluna caída com hieróglifos representa a queda da sabedoria de Thot e a entrada no Kali Yuga sob a presença de Seth.`
+        ]
+      },
+      {
+        id: 3,
+        numero: `Tarot nº 3`,
+        titulo: `A Coroa de Lótus`,
+        regencia: `Sol · 12 Casas Zodiacais`,
+        glyph: `☉ 🪷`,
+        sintese: `O acúmulo de virtudes permite à alma manifestar seu poder ascensional quando o iniciado harmoniza seus três veículos inferiores por meio do Antakharana.`,
+        simbolos: [
+          `Coroa de 12 lótus com símbolo alado central`,
+          `Quatro deidades nos vértices (3 zoomórficas, 1 antropomórfica)`,
+          `Hieróglifo do Sol plenamente manifesto`,
+          `Sacerdote tocando lira de 3 cordas`
+        ],
+        explicacao: [
+          `A coroa de doze lótus representa o acúmulo de virtudes (e as casas zodiacais) que habilitam a alma — o símbolo alado interior — a manifestar todo o seu poder de ascensão. Os quatro signos periféricos correspondem aos quatro elementos da natureza, aos solstícios e equinócios, e aos quatro veículos da personalidade em harmonia.`,
+          `Abaixo, o hieróglifo do Sol indica que a força solar ou branca atua sem escuridão. O sacerdote ou iniciado dedilha uma harpa de três cordas — seus três veículos inferiores — e, transformado no quarto veículo, o Antakharana, promove sua própria elevação espiritual.`
+        ]
+      },
+      {
+        id: 4,
+        numero: `Tarot nº 4`,
+        titulo: `O Despertar da Ressurreição`,
+        regencia: `Saturno`,
+        glyph: `♄ 🎺`,
+        sintese: `No Juízo Final, a chispa manásica dos Senhores da Mente emite o último chamado para despertar os que ainda jazem atados aos laços materiais.`,
+        simbolos: [
+          `Deidade alada masculina`,
+          `Trombeta com cone voltado para baixo`,
+          `Chama sem pavio sobre a cabeça`,
+          `Personagens mumificados deixando um sarcófago`,
+          `Estilização do signo de Saturno`
+        ],
+        explicacao: [
+          `Uma deidade alada sopra uma trombeta com o cone voltado para baixo: trata-se de um chamado concreto e inferior, porém um ato de graça final dirigido àqueles que ainda não alcançaram o despertar interior. Os corpos mumificados que abandonam o sarcófago simbolizam as consciências ainda presas a laços materiais, mundanos e familiares.`,
+          `Sobre a cabeça da deidade arde uma chama sem pavio — a chispa manásica ligada à ressurreição. Os deuses (os Senhores da Mente, situados num degrau imediatamente superior ao humano na pirâmide da evolução) também evoluem, embora de modo muito mais sutil.`
+        ]
+      },
+      {
+        id: 5,
+        numero: `Tarot nº 5`,
+        titulo: `A União Primordial`,
+        regencia: `Júpiter · Peixes`,
+        glyph: `♃ ♓`,
+        sintese: `A união sagrada do primeiro casal humano num campo de pureza espelha no plano terrestre o mistério luminoso do Yod e do Yoni estabelecido no céu.`,
+        simbolos: [
+          `Signos de Júpiter e Peixes`,
+          `Círculo luminoso com círculo e linha vertical`,
+          `Casal humano de mãos dadas`,
+          `Campo de flores de lótus`
+        ],
+        explicacao: [
+          `Os signos de Júpiter e Peixes flanqueiam um círculo de luz que encerra a união dos princípios feminino e masculino — o círculo e a linha vertical, representando o Yod penetrando no Yoni dentro de uma aura luminosa.`,
+          `Na zona inferior, um casal humano dá as mãos em meio a um campo de lótus, símbolo de pureza e divindade. O signo de Peixes confirma que a dualidade manifesta na Terra é o reflexo fiel daquela que já foi estabelecida nos planos celestes.`
+        ]
+      },
+      {
+        id: 6,
+        numero: `Tarot nº 6`,
+        titulo: `A Mescla das Águas`,
+        regencia: `Mercúrio · 7 Estrelas`,
+        glyph: `☿ ✦`,
+        sintese: `Mercúrio (Mar-Kurios, «aquele que mescla») supera a dualidade sexual ao fundir correntes opostas de essência idêntica, enquanto Psiquê liba a fonte da vida.`,
+        simbolos: [
+          `Hieróglifo da mente dupla`,
+          `Sete estrelas (corpos astronômicos / Elohim)`,
+          `Signo zodiacal de Mercúrio`,
+          `Figura feminina mesclando águas fria e quente`,
+          `Mariposa libando planta de lótus`
+        ],
+        explicacao: [
+          `No alto, flanqueado por sete estrelas — os sete corpos astronômicos, os Sete Espíritos ante o Trono ou os sete Elohim — vê-se o hieróglifo da mente dupla ao lado do signo de Mercúrio. O enviado dos deuses, Mar-Kurios («aquele que mescla»), anuncia a superação da dualidade.`,
+          `No centro, uma figura feminina mescla duas correntes de água, fria e quente: na Terra, a dualidade é um movimento andrógino entre dois elementos iguais em essência e distintos em presença. Abaixo, o lótus das virtudes oferece alimento à mariposa, símbolo universal de Psiquê que liba a fonte da vida.`
+        ]
+      },
+      {
+        id: 7,
+        numero: `Tarot nº 7`,
+        titulo: `A Pirâmide Fendida`,
+        regencia: `Júpiter · Capricórnio`,
+        glyph: `♃ ♑`,
+        sintese: `Chega o Pralaya — a dissolução total em que toda hierarquia e segurança mundana desabam igualmente, enquanto os skandas adormecem até o próximo Manvantara.`,
+        simbolos: [
+          `Raio fendendo a ponta da pirâmide`,
+          `Dois homens caindo de cabeça (um com coroa do Alto Egito)`,
+          `Portal central sem aberturas`,
+          `Signos de Júpiter e Capricórnio`
+        ],
+        explicacao: [
+          `Um raio parte e destroça o ápice da pirâmide, derrubando de cabeça para baixo tanto o iniciado com a coroa do Alto Egito quanto o homem comum. No centro da pirâmide ergue-se uma porta fechada que só exibe seu portal, sem aberturas.`,
+          `A cena retrata o momento final da dissolução cósmica e o início do Pralaya: toda segurança construída no mundo desmorona e nenhuma diferença hierárquica sobrevive ao termo do ciclo. Os «skandas» — sementes de ação, causa e efeito — permanecem adormecidos junto à Alma do Mundo até a abertura do próximo Manvantara.`
+        ]
+      },
+      {
+        id: 8,
+        numero: `Tarot nº 8`,
+        titulo: `Tiphon e as Colunas Quebradas`,
+        regencia: `Saturno · Sagitário`,
+        glyph: `♄ ♐`,
+        sintese: `Tiphon (Seth), contraparte escura de Osíris, conserva a chama espiritual e a tocha fumegante do saber oculto, dominando os ainda presos à natureza animal.`,
+        simbolos: [
+          `Seth/Tiphon com chama na cabeça e asas de morcego`,
+          `Tocha fumegante na mão esquerda e báculo na direita`,
+          `Serpente ondulante nascendo do umbigo`,
+          `Colunas caídas com lótus gravados`,
+          `Duas figuras acorrentadas com cabeça de carneiro`
+        ],
+        explicacao: [
+          `Coroada por Saturno e Sagitário, a figura de Seth (Tiphon) pisa sobre colunas partidas — dentre elas uma gravada com lótus, indicando perda de virtudes — e sobre dois seres antropomorfos com cabeça de carneiro presos por correntes e cercados de fumaça.`,
+          `Embora possua asas de morcego (natureza animal e noturna) e serpente umbilical de sentido terreno, Tiphon ostenta uma chama sobre a cabeça e uma tocha de fumaça, sinal de alta espiritualidade e posse de conhecimentos esotéricos ocultos. As pequenas chamas sobre as figuras acorrentadas indicam que mesmo os atados à natureza inferior conservam uma possibilidade final.`
+        ]
+      },
+      {
+        id: 9,
+        numero: `Tarot nº 9`,
+        titulo: `O Alquimista Solar`,
+        regencia: `Sol · Escorpião`,
+        glyph: `☉ ♏`,
+        sintese: `Coroado pelo fogo solar e pela chama da imortalidade, o Alquimista sutiliza os elementos com os atributos de Mercúrio, transmutando o chumbo inferior em ouro.`,
+        simbolos: [
+          `Cabeça rodeada por Sol e chama da imortalidade`,
+          `Asas de Nuth (Espaço Celeste) e asas nos pés`,
+          `Dois recipientes ligados por corrente líquida`,
+          `Esfera terrestre sob os pés`,
+          `Signos do Sol e Escorpião`
+        ],
+        explicacao: [
+          `Sob o Sol e Escorpião, o Alquimista ergue-se sobre a esfera terrestre com atributos de Mercúrio, o mesclador. Sua fronte traz o fogo solar e a chama da imortalidade; suas asas são as de Nuth — o Espaço Celeste — e as asas nos pés indicam velocidade de realização.`,
+          `Ao verter o líquido do recipiente superior (compreendido como chumbo) para o recipiente inferior (compreendido como ouro), o adepto realiza a grande obra alquímica: sutilizar e transmutar os elementos densos da matéria em substância luminosa.`
+        ]
+      },
+      {
+        id: 10,
+        numero: `Tarot nº 10`,
+        titulo: `A Grande Ceifadora`,
+        regencia: `Todos os Signos (Sem Restrição)`,
+        glyph: `∞ 🌈`,
+        sintese: `Quando céu e terra se unem sob o Arco-Íris, a Morte ceifa tudo sem distinção, colhendo de cada ser apenas aquilo que manteve limpo acima do lodo.`,
+        simbolos: [
+          `Esqueleto ceifador`,
+          `Arco-Íris plasmado acima`,
+          `Ausência de signos astrológicos`,
+          `Mãos, pés e cabeças emergindo do plano inferior`
+        ],
+        explicacao: [
+          `Quando o Arco-Íris se plasma — selando a união verdadeira entre o céu e a terra — a Morte ceifa todas as coisas. A ausência de signos astrológicos no topo implica a presença simultânea de todos eles, pois a morte não faz distinção entre condições ou nascimentos.`,
+          `No solo figuram cabeças, mãos e pés: para os que tiveram boa evolução, a morte respeita as cabeças que sobressaem do lodo; para outros, restam limpos apenas uma mão ou um pé, pois será colhido exatamente o que cada um apresentou aos deuses. A Magia nunca toca o Princípio nem o Final dos ciclos.`
+        ]
+      },
+      {
+        id: 11,
+        numero: `Tarot nº 11`,
+        titulo: `O Sacrifício entre as Palmeiras`,
+        regencia: `Lua · Libra`,
+        glyph: `☽ ♎`,
+        sintese: `Diante do umbral dos Mistérios, o homem que não renunciou voluntariamente aos apegos vê-se invertido pelas leis do Karma, forçado a sacrificar a personalidade.`,
+        simbolos: [
+          `Homem pendurado de cabeça para baixo`,
+          `Duas palmeiras sem folhas sustentando o travessão`,
+          `Pernas cruzadas em forma de 4`,
+          `Moedas caindo das mãos atadas`,
+          `Signos da Lua e Libra`
+        ],
+        explicacao: [
+          `Regido pela Lua e Libra, um homem pende de cabeça para baixo com as pernas cruzadas num sinal semelhante ao número 4 (forma tardia para o Egito, que reafirma o sacrifício da personalidade), enquanto moedas escorregam de suas mãos atadas.`,
+          `Longe de ser uma leitura cristã de Judas, trata-se da sujeição às leis da natureza (Karma): por não ter realizado um sacrifício voluntário de suas amarras terrenas, o homem é «sacrificado» pelo próprio crescimento das palmeiras. Os troncos sem ramos e o travessão formam o umbral que conduz «ao outro lado».`
+        ]
+      },
+      {
+        id: 12,
+        numero: `Tarot nº 12`,
+        titulo: `O Hierofante e o Leão`,
+        regencia: `Marte`,
+        glyph: `♂ 🦁`,
+        sintese: `Revestido das asas de Nuth e do Oreus na fronte, o Hierofante andrógino abre sem temor as fauces do leão — símbolo das paixões absolutamente dominadas.`,
+        simbolos: [
+          `Personagem andrógino com peplos geométricos`,
+          `Coroa com abutre Nekhebet, serpente e asas de Nuth`,
+          `Oreus na fronte`,
+          `Mãos abrindo as fauces de um leão`,
+          `Signo de Marte`
+        ],
+        explicacao: [
+          `Sob o signo de Marte, uma figura andrógina — provavelmente um Hierofante — traja peplos de traçado geométrico cujo sentido original se perdeu. Sua coroa complexa reúne o abutre Nekhebet, uma serpente, as abas laterais das asas de Nuth e o Oreus campeando na fronte.`,
+          `Com absoluta serenidade, o iniciado abre as fauces de um leão. A fera domada representa as paixões inferiores inteiramente subjugadas; desse autodomínio nasce a ausência total de medo e o enfrentamento direto do perigo.`
+        ]
+      },
+      {
+        id: 13,
+        numero: `Tarot nº 13`,
+        titulo: `A Esfinge e a Roda da Lei`,
+        regencia: `Mercúrio · Virgem`,
+        glyph: `☿ ♍`,
+        sintese: `Impulsionada pela lança inexorável da Esfinge, a Roda da Lei alterna sem cessar a ascensão luminosa de Mau (sabedoria) e a descida terrena de Toeris (ciência do mundo).`,
+        simbolos: [
+          `Esfinge alada com cabeça humana portando lança`,
+          `Roda da Lei sobre pilar`,
+          `Mau (gato alado com cabeça de coruja) em ascensão`,
+          `Toeris (forma feminina de Seth) com serpente umbilical`,
+          `Duas serpentes ao pé do pilar (Caduceu / Kundalini)`
+        ],
+        explicacao: [
+          `Sob Mercúrio e Virgem, uma esfinge alada de cabeça humana empunha uma lança — símbolo da inexorabilidade do tempo — provocando o giro incessante da Roda da Lei. Dela pendem Mau (luz e sabedoria) em ascensão e Seth em sua forma feminina de Toeris (hipopótamo) em descensão, portando a serpente umbilical que confere a ciência das coisas do mundo.`,
+          `Ambas as deidades trazem a chama da imortalidade sobre a cabeça, demonstrando a alternância interminável dos polos positivo e negativo. Na base do pilar, as duas serpentes da sabedoria e do poder evocam o caduceu de Mercúrio e o fogo serpentino da Kundalini.`
+        ]
+      },
+      {
+        id: 14,
+        numero: `Tarot nº 14`,
+        titulo: `O Guardião da Chama`,
+        regencia: `Júpiter · Leão`,
+        glyph: `♃ ♌`,
+        sintese: `Mesmo caminhando nas sombras da ignorância sem recorrer ao báculo divino que traz atrás de si, o candidato guarda o valor de proteger sua pequena chama interior.`,
+        simbolos: [
+          `Caminhante com capa de forma geométrica`,
+          `Pequena chama ardente protegida pela capa`,
+          `Báculo de Anubis levado atrás do corpo`,
+          `Signos de Júpiter e Leão`
+        ],
+        explicacao: [
+          `Regido por Júpiter e Leão, o caminhante avança na obscuridade carregando o báculo de Anubis às costas, enquanto envolve com sua capa geométrica uma pequena chama acesa para que o vento não a apague.`,
+          `Ele representa o candidato aos Mistérios que, por ignorância, ainda caminha entre sombras e não utiliza a ajuda da mão dos deuses (o cajado que não lhe falta, mas permanece inativo). Contudo, possui coragem suficiente para resguardar com a própria personalidade seu sagrado fogo interior.`
+        ]
+      },
+      {
+        id: 15,
+        numero: `Tarot nº 15`,
+        titulo: `Ísis e a Balança da Justiça`,
+        regencia: `Vênus · Câncer`,
+        glyph: `♀ ♋`,
+        sintese: `Cega às paixões e mantendo aparte seu duplo astral («kha»), Ísis aplica a justiça imparcial com a balança e o alfanje sobre o quarto degrau da dualidade.`,
+        simbolos: [
+          `Grande lótus inclinado com cruz na raiz`,
+          `Divindade feminina cega com balança e alfanje`,
+          `Trono protegido por Nekhebet e asas de Nuth`,
+          `Pequena figura zoomorfa com cabeça humana («kha»)`,
+          `Quarto nível de escadas`
+        ],
+        explicacao: [
+          `Sob Vênus e Câncer, um grande lótus inclinado — trazendo na raiz de suas folhas a cruz da dualidade e dos opostos — cobre uma forma cega de Ísis assentada num quarto nível de escadas. Em uma mão empunha a balança; na outra, o alfanje, resguardada em seu trono por Nekhebet e pelas asas de Nuth.`,
+          `Ao lado aparece uma pequena criatura zoomorfa de cabeça humana: trata-se do corpo astral, duplo ou «kha», que a deidade mantém separado de si para poder julgar com total retidão e sem interferência passional.`
+        ]
+      },
+      {
+        id: 16,
+        numero: `Tarot nº 16`,
+        titulo: `O Carro das Duas Esfinges`,
+        regencia: `Sol · Gêmeos`,
+        glyph: `☉ ♊`,
+        sintese: `As esfinges branca e preta permanecem imóveis diante de Amon-Ra: os mistérios diurnos e noturnos já escolheram o Caminho da Virtude, mas cabe ao candidato avançar.`,
+        simbolos: [
+          `Pálio de quatro colunas estreladas`,
+          `Figura com alfanje, Oreus, Tau, esquadro e báculo de triângulo, círculo e quadrado`,
+          `Duas esfinges imóveis (branca e preta) com pata dobrada`,
+          `Lótus em floração e Amon-Ra (Sol alado) à frente`,
+          `Signos do Sol e Gêmeos`
+        ],
+        explicacao: [
+          `Elevação superior da justiça do arcano anterior, sob o Sol e Gêmeos: sob um dossel estrelado de quatro colunas, uma figura masculina porta o Oreus da atenção superior no capacete, o martelo de Hórus (esquadro) e o Tau no peito, um alfanje e um báculo com as três figuras primordiais (triângulo, círculo e quadrado).`,
+          `O carro é ladeado por duas esfinges — uma branca (mistérios diurnos) e outra preta (mistérios noturnos) — ambas imóveis com a pata esquerda sobre o peito, sinal de que elegeram a Magia Branca e o Caminho da Virtude. À frente, entre lótus em flor, Amon-Ra guarda a porta e a entrada no Caminho, aguardando que o próprio candidato dê o passo.`
+        ]
+      },
+      {
+        id: 17,
+        numero: `Tarot nº 17`,
+        titulo: `A Encruzilhada dos Caminhos`,
+        regencia: `Lua · Touro`,
+        glyph: `☽ ♉`,
+        sintese: `Diante da escolha duvidosa entre a natureza espiritual velada e a sedução material, é preferível resistir com firmeza — e receber o auxílio de Mau.`,
+        simbolos: [
+          `Mau como deidade solar com auréola, arco, flecha e chama`,
+          `Candidato em encruzilhada com mãos no alto do peito`,
+          `Figura velada (natureza superior) e figura com peitos nus (material)`,
+          `Signos da Lua e Touro`
+        ],
+        explicacao: [
+          `Regido pela Lua e Touro, o candidato encontra-se diante de uma grande escolha: seguir a natureza superior, esotérica e velada, ou ceder à natureza material e maternal. Ele permanece firme com as mãos fechadas no alto do peito, concentrando seu poder místico (ao passo que no meio concentrariam o psíquico e embaixo o físico).`,
+          `Porque o candidato resiste com integridade, não lhe falta o socorro divino: Mau, envolto em auréola de luz e coroado com a chama da imortalidade, dispara uma flecha contra a natureza material. Diante de uma decisão incerta, vale mais resistir e aguardar do que marchar na direção errada.`
+        ]
+      },
+      {
+        id: 18,
+        numero: `Tarot nº 18`,
+        titulo: `O Dossel da Eleição Positiva`,
+        regencia: `Marte · Áries`,
+        glyph: `♂ ♈`,
+        sintese: `Com agressividade espiritual e decisão solar, o iniciado separa claramente a dualidade Budhi-astral e afirma o princípio da eleição positiva.`,
+        simbolos: [
+          `Dossel sustentado por duas colunas`,
+          `Figura central com Oreus e gesto de bênção solar`,
+          `Báculo com os Cornos de Ísis (para cima e para baixo)`,
+          `Representantes branco e preto aos pés`,
+          `Signos de Marte e Áries`
+        ],
+        explicacao: [
+          `Sob um dossel de duas colunas e os signos de Marte e Áries, a personagem central ostenta o Oreus na fronte e tem aos pés as duas possibilidades — o branco e o preto. Enquanto uma mão realiza o gesto de bênção e intuição solar, a outra segura um báculo adornado com os Cornos de Ísis voltados para cima e para baixo.`,
+          `Essa orientação oposta dos cornos e o elemento central do báculo indicam a divisão consciente da dualidade Budhi-astral. Marte rege aqui a agressividade espiritual necessária à retidão, e Áries atua investindo contra as feras que poderiam obscurecer a decisão.`
+        ]
+      },
+      {
+        id: 19,
+        numero: `Tarot nº 19`,
+        titulo: `A Pedra Cúbica e o Sacrifício Voluntário`,
+        regencia: `Júpiter`,
+        glyph: `♃ ▣`,
+        sintese: `À diferença do Tarot nº 11, o sacrifício da personalidade aqui é consciente e voluntário: o iniciado senta-se soberano sobre a pedra quadrada da matéria.`,
+        simbolos: [
+          `Coroa do Baixo Egito e Oreus na fronte`,
+          `Báculo de forma solar na mão direita`,
+          `Posição cruzada das pernas`,
+          `Assento sobre estrutura quadrada (material)`,
+          `Signo de Júpiter`
+        ],
+        explicacao: [
+          `Sob a regência de Júpiter, a figura traz a coroa do Baixo Egito, o Oreus na fronte e um báculo solar na mão direita. O cruzamento de suas pernas recorda imediatamente o homem suspenso do Tarot nº 11.`,
+          `Há, contudo, uma diferença decisiva: neste arcano o sacrifício da personalidade foi aceito de modo voluntário. Ao sentar-se com serenidade sobre uma estrutura quadrada — símbolo da personalidade e do mundo material — o iniciado demonstra haver submetido a matéria ao comando do espírito.`
+        ]
+      },
+      {
+        id: 20,
+        numero: `Tarot nº 20`,
+        titulo: `A Barca de Ísis e as Doze Estrelas`,
+        regencia: `Vênus`,
+        glyph: `♀ ★`,
+        sintese: `Navegando sobre a Barca de Ísis e coroada pelas doze estrelas zodiacais, a deidade protege a palavra sagrada e domina plenamente o mundo material.`,
+        simbolos: [
+          `Figura feminina com pés sobre a Barca de Ísis`,
+          `Aura luminosa com 12 estrelas e Oreus na fronte`,
+          `Abutre de asas abertas protegendo as palavras`,
+          `Báculo lunar na mão direita`,
+          `Assento quadrangular (matéria dominada)`
+        ],
+        explicacao: [
+          `Governada por Vênus, a divindade feminina apoia os pés sobre a Barca de Ísis enquanto uma aura luminosa com doze estrelas — emblema das doze casas zodiacais — envolve sua cabeça adornada pelo Oreus. Sentada sobre uma estrutura quadrangular, ela simboliza o mundo material inteiramente dominado.`,
+          `Em uma mão sustenta um báculo lunar e, na outra, um abutre com as asas abertas em postura de guarda, indicando a proteção rigorosa sobre as palavras que possa pronunciar.`
+        ]
+      },
+      {
+        id: 21,
+        numero: `Tarot nº 21`,
+        titulo: `Ísis Velada entre as Colunas`,
+        regencia: `Lua`,
+        glyph: `☽ ☥`,
+        sintese: `Entre as colunas branca e preta da dualidade, Ísis guarda a Ankh e o papiro do saber, revelando que o conhecimento «negro» é apenas oculto e esotérico.`,
+        simbolos: [
+          `Ísis velada com cornos de Hathor convertidos em lira e lua`,
+          `Coluna branca e coluna preta`,
+          `Braço coberto junto à coluna preta e descoberto junto à branca`,
+          `Cruz ansata (Ankh) no peito`,
+          `Papiro entre as mãos`
+        ],
+        explicacao: [
+          `Ísis surge velada, coroada pelos cornos de Hathor — a vaca cósmica — harmonizados em forma de lira e encimados por uma lua, em consonância com seu signo astrológico. Senta-se entre duas colunas, uma branca e uma preta, emblemas da dualidade cósmica.`,
+          `Ao manter coberto o braço do lado da coluna preta e descoberto o da coluna branca, ensina que o saber «preto» não pertence à «mão esquerda», mas ao domínio esotérico e velado. Sobre o peito repousa a Ankh (vida eterna), e suas mãos guardam o papiro do conhecimento.`
+        ]
+      },
+      {
+        id: 22,
+        numero: `Tarot nº 22`,
+        titulo: `O Cometa e o Advento da Nova Época`,
+        regencia: `Cometa`,
+        glyph: `☄ ☀`,
+        sintese: `Anunciado pelo cometa, o candidato munido do báculo solar e do punhal aproxima-se do altar de Thot, inaugurando uma nova época feliz e espiritual.`,
+        simbolos: [
+          `Cometa como signo astrológico superior`,
+          `Caminhante com báculo solar na mão direita`,
+          `Pequeno quadrado com íbis (Thot destruidor do aquático)`,
+          `Oferendas ao lado de um punhal protetor`
+        ],
+        explicacao: [
+          `O signo astrológico deste arcano é um cometa, presságio do advento de uma nova época e da chegada de um novo Avatar para a humanidade. Portando um báculo de natureza solar na mão direita, a personagem caminha resoluta em direção a um pequeno altar quadrado para realizar uma oferenda.`,
+          `No interior do quadrado vê-se o íbis — símbolo de Thot, destruidor do elemento aquático inferior — e, sobre o altar, as oferendas repousam ao lado de um punhal destinado à defesa do candidato contra as más sombras. O arcano anuncia um novo ciclo luminoso e uma abertura fecunda rumo ao espiritual.`
+        ]
+      }
+    ];
+
+    /* =========================================================================
+       GERADOR DE CARTUCHOS SVG PERSONALIZADOS (100% BASEADOS EM ST_Taros.pdf)
+       ========================================================================= */
+    function getArcanoInnerArt(id) {
+      const gold = `var(--primary)`;
+      const sky = `var(--tertiary)`;
+      const ivory = `var(--on-surface)`;
+      const muted = `var(--secondary)`;
+      const bg = `var(--background)`;
+
+      switch (id) {
+        case 1:
+          return `
+            <path d="M44 50a11 11 0 1 0 13 13 9 9 0 1 1-13-13z" fill="${gold}"/>
+            <path d="M56 54c6 0 11 4 11 8H49" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M35 66h12M65 51l3 2-3 2" stroke="${sky}" stroke-width="1.2" fill="none"/>
+            <polygon points="34,114 48,84 62,114" fill="none" stroke="${ivory}" stroke-width="1.7"/>
+            <rect x="45" y="102" width="6" height="12" fill="${gold}"/>
+            <polygon points="62,114 76,84 90,114" fill="${muted}" fill-opacity="0.35" stroke="${muted}" stroke-width="1.7"/>
+            <circle cx="48" cy="74" r="3.5" fill="none" stroke="${gold}" stroke-width="1.3"/>
+            <path d="M48 77.5v5m-3-2.5h6" stroke="${gold}" stroke-width="1.3"/>
+            <path d="M71 76q3-3 6 0t6 0" stroke="${sky}" stroke-width="1.3" fill="none"/>
+            <path d="M40 124h8v-7l4-4M74 124h8v-7l-4-4" stroke="${ivory}" stroke-width="1.4" fill="none"/>
+            <path d="M55 138c0 5 10 5 10 0m-5 4v6c0 4 4 4 5 2" stroke="${gold}" stroke-width="1.5" fill="none"/>
+          `;
+        case 2:
+          return `
+            <circle cx="60" cy="54" r="10" fill="${bg}" stroke="${gold}" stroke-width="1.8"/>
+            <circle cx="63" cy="54" r="8" fill="${muted}" fill-opacity="0.5"/>
+            <circle cx="52" cy="80" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M52 85v20l-6 14m6-14l7 14m-7-10l-12-5m12 5l11-4" stroke="${ivory}" stroke-width="1.6" fill="none"/>
+            <path d="M38 92l-6 28" stroke="${gold}" stroke-width="1.6"/>
+            <circle cx="43" cy="96" r="3" fill="${sky}"/>
+            <circle cx="59" cy="96" r="3" fill="${gold}"/>
+            <path d="M72 106l16-6-8 10 9 5-17-2z" fill="none" stroke="${gold}" stroke-width="1.5"/>
+            <path d="M36 136h48v7H36z" fill="none" stroke="${muted}" stroke-width="1.5"/>
+            <path d="M44 139h8m8 0h10" stroke="${sky}" stroke-width="1.2"/>
+          `;
+        case 3:
+          return `
+            <circle cx="60" cy="76" r="21" fill="none" stroke="${gold}" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <path d="M46 76c6-6 22-6 28 0-6 6-22 6-28 0z" fill="none" stroke="${sky}" stroke-width="1.4"/>
+            <circle cx="60" cy="76" r="4" fill="${gold}"/>
+            <circle cx="38" cy="52" r="2.5" fill="${ivory}"/>
+            <circle cx="82" cy="52" r="2.5" fill="${ivory}"/>
+            <circle cx="38" cy="100" r="2.5" fill="${ivory}"/>
+            <circle cx="82" cy="100" r="2.5" fill="${ivory}"/>
+            <circle cx="60" cy="109" r="5" fill="none" stroke="${gold}" stroke-width="1.4"/>
+            <circle cx="60" cy="109" r="1.6" fill="${gold}"/>
+            <path d="M47 124c0 16 26 16 26 0" stroke="${ivory}" stroke-width="1.6" fill="none"/>
+            <path d="M53 123v13m7-13v14m7-13v13" stroke="${gold}" stroke-width="1.2"/>
+          `;
+        case 4:
+          return `
+            <path d="M34 66c12-10 20-8 26 0 6-8 14-10 26 0-12 6-18 6-26 2-8 4-14 4-26-2z" fill="none" stroke="${sky}" stroke-width="1.5"/>
+            <path d="M60 44c3 4 3 8 0 11-3-3-3-7 0-11z" fill="${gold}"/>
+            <circle cx="60" cy="61" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 66v16m0-8l16 14" stroke="${ivory}" stroke-width="1.6"/>
+            <polygon points="73,84 83,93 70,96" fill="none" stroke="${gold}" stroke-width="1.5"/>
+            <rect x="38" y="114" width="44" height="22" rx="3" fill="none" stroke="${muted}" stroke-width="1.6"/>
+            <path d="M49 124v-16m11 16v-19m11 19v-15" stroke="${ivory}" stroke-width="1.7"/>
+            <circle cx="49" cy="105" r="2.5" fill="${ivory}"/>
+            <circle cx="60" cy="102" r="2.5" fill="${ivory}"/>
+            <circle cx="71" cy="106" r="2.5" fill="${ivory}"/>
+          `;
+        case 5:
+          return `
+            <circle cx="60" cy="64" r="17" fill="none" stroke="${gold}" stroke-width="1.6"/>
+            <circle cx="60" cy="64" r="6" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 52v24" stroke="${gold}" stroke-width="1.8"/>
+            <path d="M34 64h6m40 0h6" stroke="${sky}" stroke-width="1.4"/>
+            <circle cx="49" cy="96" r="4" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M49 101v22m-5 12l5-12 4 12m-4-17h11" stroke="${ivory}" stroke-width="1.5"/>
+            <circle cx="71" cy="96" r="4" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M71 101v22m-4 12l4-12 5 12m-5-17H60" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M34 139q6-6 12 0t12 0t12 0t12 0" stroke="${gold}" stroke-width="1.4" fill="none"/>
+          `;
+        case 6:
+          return `
+            <path d="M42 48l3 0m9-3h3m9-1h3m9 1h3m9 3h3" stroke="${gold}" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="60" cy="66" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 71v26m-14-16h28" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M46 81c-6 10-8 24-4 38" stroke="${sky}" stroke-width="1.6" fill="none"/>
+            <path d="M74 81c6 10 8 24 4 38" stroke="${gold}" stroke-width="1.6" fill="none"/>
+            <path d="M42 119c8 8 28 8 36 0" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M51 136c4-6 14-6 18 0-6 3-12 3-18 0z" fill="none" stroke="${gold}" stroke-width="1.4"/>
+            <path d="M56 126l4 4 4-4" stroke="${ivory}" stroke-width="1.3" fill="none"/>
+          `;
+        case 7:
+          return `
+            <polygon points="36,128 60,64 84,128" fill="none" stroke="${ivory}" stroke-width="1.7"/>
+            <path d="M48 56l14 14-6 4 12 16" stroke="${gold}" stroke-width="2.2" fill="none"/>
+            <polygon points="56,66 64,66 60,57" fill="${gold}"/>
+            <rect x="54" y="102" width="12" height="26" fill="${bg}" stroke="${muted}" stroke-width="1.4"/>
+            <path d="M40 88l-6 14m4 4l-3 7" stroke="${sky}" stroke-width="1.5"/>
+            <circle cx="34" cy="112" r="3" fill="${sky}"/>
+            <path d="M80 90l6 14m-4 4l3 7" stroke="${ivory}" stroke-width="1.5"/>
+            <circle cx="86" cy="114" r="3" fill="${ivory}"/>
+          `;
+        case 8:
+          return `
+            <path d="M60 44c3 4 3 7 0 10-3-3-3-7 0-10z" fill="${gold}"/>
+            <path d="M36 68c8-10 16-6 24 2 8-8 16-12 24-2-4 10-12 14-24 10-12 4-20 0-24-10z" fill="none" stroke="${muted}" stroke-width="1.5"/>
+            <circle cx="60" cy="64" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 69v26m-14-16l-8 14m22-14l9 14" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M38 93l-4 12m0-12c-3-4-1-8 2-10" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M60 88c6 3-6 7 0 11s-5 6 0 9" stroke="${gold}" stroke-width="1.5" fill="none"/>
+            <path d="M36 128h48" stroke="${muted}" stroke-width="1.7"/>
+            <circle cx="44" cy="136" r="3" fill="none" stroke="${ivory}" stroke-width="1.3"/>
+            <circle cx="76" cy="136" r="3" fill="none" stroke="${ivory}" stroke-width="1.3"/>
+          `;
+        case 9:
+          return `
+            <circle cx="60" cy="60" r="11" fill="none" stroke="${gold}" stroke-width="1.4"/>
+            <path d="M60 44c2.5 3 2.5 6 0 8-2.5-2-2.5-5 0-8z" fill="${gold}"/>
+            <circle cx="60" cy="60" r="4" fill="none" stroke="${ivory}" stroke-width="1.4"/>
+            <path d="M34 74c10-6 18-3 26 4 8-7 16-10 26-4" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M60 65v36m-12-20l-6 12m18-12l8 14" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M38 88h9v10h-9z" fill="${muted}" stroke="${ivory}" stroke-width="1.2"/>
+            <path d="M72 104h10v11H72z" fill="${gold}" fill-opacity="0.35" stroke="${gold}" stroke-width="1.3"/>
+            <path d="M47 93c10 0 20 5 26 11" stroke="${sky}" stroke-width="1.4" stroke-dasharray="3 2" fill="none"/>
+            <circle cx="60" cy="134" r="14" fill="none" stroke="${muted}" stroke-width="1.4"/>
+          `;
+        case 10:
+          return `
+            <path d="M34 58a26 26 0 0 1 52 0" fill="none" stroke="${sky}" stroke-width="1.5"/>
+            <path d="M39 58a21 21 0 0 1 42 0" fill="none" stroke="${gold}" stroke-width="1.3"/>
+            <circle cx="60" cy="70" r="5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 75v32m-12-22h24m-12 22l-8 16m8-16l8 16" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M76 62v58m0-58c-16-4-26 2-32 10" stroke="${gold}" stroke-width="1.8" fill="none"/>
+            <circle cx="42" cy="136" r="3" fill="none" stroke="${ivory}" stroke-width="1.3"/>
+            <path d="M56 138h8m12-3l4 4" stroke="${gold}" stroke-width="1.4"/>
+          `;
+        case 11:
+          return `
+            <path d="M38 134V58m44 76V58M34 58h52" stroke="${muted}" stroke-width="2"/>
+            <path d="M60 58v26m-10 8l10-8 10 8m-10 0l-9 18m9-18l8 10-8 6" stroke="${ivory}" stroke-width="1.6" fill="none"/>
+            <circle cx="60" cy="116" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <circle cx="48" cy="128" r="2" fill="${gold}"/>
+            <circle cx="54" cy="134" r="2" fill="${gold}"/>
+            <circle cx="68" cy="131" r="2" fill="${gold}"/>
+          `;
+        case 12:
+          return `
+            <path d="M44 52c4-6 28-6 32 0" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <circle cx="60" cy="60" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <circle cx="60" cy="54" r="1.5" fill="${gold}"/>
+            <path d="M60 65v32l-12 26m12-26l12 26m-12-46l14 14m-14-14l-10 14" stroke="${ivory}" stroke-width="1.6"/>
+            <circle cx="75" cy="108" r="10" fill="none" stroke="${gold}" stroke-width="1.7"/>
+            <path d="M68 105h10m-10 6h10" stroke="${ivory}" stroke-width="1.5"/>
+          `;
+        case 13:
+          return `
+            <path d="M42 56h36l-4 12H46z" fill="none" stroke="${gold}" stroke-width="1.4"/>
+            <circle cx="56" cy="50" r="4" fill="none" stroke="${ivory}" stroke-width="1.4"/>
+            <path d="M74 44v26" stroke="${sky}" stroke-width="1.6"/>
+            <circle cx="60" cy="96" r="17" fill="none" stroke="${gold}" stroke-width="1.6"/>
+            <path d="M60 79v34M43 96h34" stroke="${gold}" stroke-width="1.1"/>
+            <circle cx="38" cy="90" r="4" fill="${sky}"/>
+            <circle cx="82" cy="104" r="4" fill="${muted}"/>
+            <path d="M60 113v24m-9 0c4-8 14-12 9-20m9 20c-4-8-14-12-9-20" stroke="${ivory}" stroke-width="1.4" fill="none"/>
+          `;
+        case 14:
+          return `
+            <circle cx="60" cy="62" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <polygon points="60,68 42,126 78,126" fill="${muted}" fill-opacity="0.25" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M66 94c3 4 3 8 0 11-3-3-3-7 0-11z" fill="${gold}"/>
+            <circle cx="66" cy="100" r="8" fill="none" stroke="${gold}" stroke-width="1" stroke-dasharray="2 2"/>
+            <path d="M42 74l-8 54" stroke="${sky}" stroke-width="1.6"/>
+            <path d="M34 74l4-4" stroke="${sky}" stroke-width="1.6"/>
+          `;
+        case 15:
+          return `
+            <path d="M38 56c12-10 26-8 38 4" stroke="${sky}" stroke-width="1.5" fill="none"/>
+            <path d="M36 56h8m-4-4v8" stroke="${gold}" stroke-width="1.4"/>
+            <circle cx="60" cy="74" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M56 73h8" stroke="${gold}" stroke-width="1.5"/>
+            <path d="M60 79v30m-14-20h28" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M42 89l-4 12h8zm4 0" stroke="${gold}" stroke-width="1.3" fill="none"/>
+            <path d="M74 89c4-6 8-12 4-18" stroke="${sky}" stroke-width="1.6" fill="none"/>
+            <path d="M38 120h44M34 128h52M30 136h60" stroke="${muted}" stroke-width="1.5"/>
+            <circle cx="80" cy="108" r="3" fill="${ivory}"/>
+          `;
+        case 16:
+          return `
+            <path d="M36 52h48M39 52v36m42-36v36" stroke="${sky}" stroke-width="1.4"/>
+            <circle cx="60" cy="64" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 69v24m-12-14h24" stroke="${ivory}" stroke-width="1.5"/>
+            <polygon points="44,72 48,64 52,72" fill="none" stroke="${gold}" stroke-width="1.2"/>
+            <circle cx="48" cy="76" r="2.5" fill="none" stroke="${gold}" stroke-width="1.2"/>
+            <rect x="42" y="96" width="36" height="14" fill="none" stroke="${gold}" stroke-width="1.5"/>
+            <rect x="35" y="114" width="18" height="12" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <rect x="67" y="114" width="18" height="12" fill="${muted}" fill-opacity="0.4" stroke="${muted}" stroke-width="1.5"/>
+            <circle cx="60" cy="134" r="4" fill="${gold}"/>
+            <path d="M46 134h8m12 0h8" stroke="${gold}" stroke-width="1.4"/>
+          `;
+        case 17:
+          return `
+            <circle cx="60" cy="54" r="9" fill="none" stroke="${gold}" stroke-width="1.3"/>
+            <path d="M48 56c8-8 16-8 24 0m-12-10v16" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M60 64l14 14" stroke="${gold}" stroke-width="1.4"/>
+            <circle cx="60" cy="88" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 93v36m-7-22l7-4 7 4" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M39 98v28m2-28c-4 0-5 6-5 12" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M81 98v28m-4-18h8" stroke="${muted}" stroke-width="1.4"/>
+          `;
+        case 18:
+          return `
+            <path d="M36 52h48M40 52v76m40-76v76" stroke="${muted}" stroke-width="1.5"/>
+            <circle cx="60" cy="70" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 75v34m-12-22l12-4 12 4" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M48 64v46m-4-42c4 4 4 8 0 12m4 12c4-4 4-8 0-12" stroke="${gold}" stroke-width="1.4" fill="none"/>
+            <circle cx="46" cy="126" r="4" fill="none" stroke="${ivory}" stroke-width="1.4"/>
+            <circle cx="74" cy="126" r="4" fill="${muted}"/>
+          `;
+        case 19:
+          return `
+            <circle cx="60" cy="60" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M55 54h10l-2-6h-6z" fill="${gold}"/>
+            <path d="M60 65v26m-12-16h24" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M76 58v42" stroke="${gold}" stroke-width="1.6"/>
+            <circle cx="76" cy="56" r="4" fill="none" stroke="${gold}" stroke-width="1.4"/>
+            <rect x="44" y="96" width="32" height="32" fill="none" stroke="${sky}" stroke-width="1.6"/>
+            <path d="M54 96l10 18-10 10" stroke="${ivory}" stroke-width="1.5" fill="none"/>
+          `;
+        case 20:
+          return `
+            <circle cx="60" cy="64" r="14" fill="none" stroke="${gold}" stroke-width="1.2" stroke-dasharray="2 4"/>
+            <circle cx="60" cy="64" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 69v28m-12-18h24" stroke="${ivory}" stroke-width="1.6"/>
+            <path d="M40 76c4-6 8-6 12 0" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M75 68v34" stroke="${sky}" stroke-width="1.5"/>
+            <path d="M73 65a3 3 0 1 0 4 4" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <path d="M36 108c10 10 38 10 48 0H36z" fill="none" stroke="${gold}" stroke-width="1.6"/>
+            <rect x="44" y="118" width="32" height="18" fill="none" stroke="${muted}" stroke-width="1.5"/>
+          `;
+        case 21:
+          return `
+            <rect x="34" y="54" width="10" height="78" fill="none" stroke="${ivory}" stroke-width="1.6"/>
+            <rect x="76" y="54" width="10" height="78" fill="${muted}" fill-opacity="0.4" stroke="${muted}" stroke-width="1.6"/>
+            <path d="M52 54c4 8 12 8 16 0" stroke="${gold}" stroke-width="1.5" fill="none"/>
+            <path d="M56 48a4 4 0 1 0 8 0" stroke="${sky}" stroke-width="1.4" fill="none"/>
+            <circle cx="60" cy="68" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M60 73v38m-10-24h20" stroke="${ivory}" stroke-width="1.6"/>
+            <circle cx="60" cy="84" r="3" fill="none" stroke="${gold}" stroke-width="1.3"/>
+            <path d="M60 87v6m-3-3h6" stroke="${gold}" stroke-width="1.3"/>
+            <rect x="52" y="96" width="16" height="10" fill="none" stroke="${sky}" stroke-width="1.3"/>
+          `;
+        case 22:
+        default:
+          return `
+            <circle cx="44" cy="52" r="4" fill="${gold}"/>
+            <path d="M48 52l22-5m-22 7l16-1" stroke="${gold}" stroke-width="1.3"/>
+            <circle cx="46" cy="76" r="4.5" fill="none" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M46 81v34m-10-22l10-3 10 3m-10 22l-6 18m6-18l6 18" stroke="${ivory}" stroke-width="1.5"/>
+            <path d="M36 74v44" stroke="${gold}" stroke-width="1.5"/>
+            <circle cx="36" cy="72" r="3.5" fill="none" stroke="${gold}" stroke-width="1.3"/>
+            <rect x="64" y="102" width="22" height="24" fill="none" stroke="${sky}" stroke-width="1.5"/>
+            <path d="M72 114c2-4 6-4 8 0l4 2" stroke="${ivory}" stroke-width="1.3" fill="none"/>
+            <path d="M66 96h10m4-4v8" stroke="${gold}" stroke-width="1.4"/>
+          `;
+      }
+    }
+
+    const IMAGENS_ARCANOS = {
+      1: `The Twilight.jpg`,
+      2: `The Crocodile.jpg`,
+      3: `The Crown of the Magicians.jpg`,
+      4: `The Resurrection from Death.jpg`,
+      5: `The Beaming Light.jpg`,
+      6: `The Star of the Magicians.jpg`,
+      7: `The Thunderstruck Tower.jpg`,
+      8: `Typhon.jpg`,
+      9: `The Two Urns.jpg`,
+      10: `The Reaping Skeleton.jpg`,
+      11: `The Victim.jpg`,
+      12: `The Tamed Lion.jpg`,
+      13: `The Sphinx.jpg`,
+      14: `The Veiled Lamp.jpg`,
+      15: `The Balance and the Sword.jpg`,
+      16: `The Chariot of Osiris.jpg`,
+      17: `The Two Paths.jpg`,
+      18: `The Master of the Arcanas.jpg`,
+      19: `The Cubic Stone.jpg`,
+      20: `Isis-Urania.jpg`,
+      21: `The Gate of the Santuary.jpg`,
+      22: `The Magician.jpg`
+    };
+
+    const NOMES_ARCANOS = {
+      1: `O Crepúsculo`,
+      2: `O Crocodilo`,
+      3: `A Coroa dos Magos`,
+      4: `A Ressurreição dos Mortos`,
+      5: `A Luz Resplandecente`,
+      6: `A Estrela dos Magos`,
+      7: `A Torre Fulminada`,
+      8: `Tifão / Seth`,
+      9: `As Duas Urnas`,
+      10: `O Esqueleto Ceifador / A Morte`,
+      11: `A Vítima`,
+      12: `O Leão Domado`,
+      13: `A Esfinge`,
+      14: `A Lâmpada Velada`,
+      15: `A Balança e a Espada`,
+      16: `O Carro de Osíris`,
+      17: `Os Dois Caminhos`,
+      18: `O Mestre dos Arcanos`,
+      19: `A Pedra Cúbica`,
+      20: `Ísis-Urânia`,
+      21: `A Porta do Santuário`,
+      22: `O Mago`
+    };
+
+    const ARCANO_ROMANO = {
+      1: `XVIII`, 2: `XXII`, 3: `XXI`, 4: `XX`, 5: `XIX`,
+      6: `XVII`, 7: `XVI`, 8: `XV`, 9: `XIV`, 10: `XIII`,
+      11: `XII`, 12: `XI`, 13: `X`, 14: `IX`, 15: `VIII`,
+      16: `VII`, 17: `VI`, 18: `V`, 19: `IV`, 20: `III`,
+      21: `II`, 22: `I`
+    };
+
+    function renderArcanoSvg(id, decorative) {
+      const arc = ARCANOS.find(a => a.id === id) || ARCANOS[0];
+      const imagem = IMAGENS_ARCANOS[arc.id];
+      const ariaAttr = decorative
+        ? `aria-hidden="true"`
+        : `role="img" alt="Tarot ${arc.numero}: ${arc.titulo}"`;
+      return `<img src="Tarô Egípcio/${imagem}" ${ariaAttr} loading="lazy" decoding="async">`;
+    }
+
+    function renderCardBackSvg() {
+      return `
+        <svg class="card-back-svg" viewBox="0 0 80 110" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="40" cy="36" rx="14" ry="20" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <line x1="22" y1="58" x2="58" y2="58" stroke="currentColor" stroke-width="2.2"/>
+          <line x1="40" y1="56" x2="40" y2="94" stroke="currentColor" stroke-width="2.2"/>
+          <circle cx="40" cy="36" r="4" fill="var(--tertiary)"/>
+          <path d="M18 16h44M18 98h44" stroke="var(--outline)" stroke-width="1"/>
+        </svg>
+      `;
+    }
+
+    /* =========================================================================
+       ESTADO GLOBAL DO JOGO E DO CÓDICE
+       ========================================================================= */
+    const appState = {
+      pairsCount: 6,
+      deck: [],
+      flippedIndices: [],
+      matchedIds: [],
+      unlockedIds: [],
+      activeArcanoId: null,
+      codexFilter: `all`,
+      moves: 0,
+      seconds: 0,
+      timerHandle: null,
+      isLocked: false,
+      gameStarted: false
+    };
+
+    function getGridGeometry(pairs) {
+      if (pairs === 6) return { cols: 4, rows: 3, maxW: `740px` };
+      if (pairs === 8) return { cols: 4, rows: 4, maxW: `700px` };
+      if (pairs === 12) return { cols: 6, rows: 4, maxW: `980px` };
+      return { cols: 11, rows: 4, maxW: `1240px` };
+    }
+
+    function shuffleArray(arr) {
+      const copy = arr.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = copy[i];
+        copy[i] = copy[j];
+        copy[j] = tmp;
+      }
+      return copy;
+    }
+
+    function selectArcanosForRound(pairs) {
+      if (pairs >= 22) return ARCANOS.map(a => a.id);
+      const lockedPool = shuffleArray(ARCANOS.filter(a => !appState.unlockedIds.includes(a.id)).map(a => a.id));
+      const unlockedPool = shuffleArray(appState.unlockedIds.slice());
+      const combined = lockedPool.concat(unlockedPool);
+      return combined.slice(0, pairs);
+    }
+
+    /* =========================================================================
+       PERSISTÊNCIA (window.notebookAppApi)
+       ========================================================================= */
+    async function savePersistentState() {
+      const api = window.notebookAppApi;
+      if (!api || typeof api.setAppState !== `function`) return;
+      try {
+        await api.setAppState({
+          pairsCount: appState.pairsCount,
+          unlockedIds: appState.unlockedIds,
+          activeArcanoId: appState.activeArcanoId,
+          codexFilter: appState.codexFilter
+        });
+      } catch (err) {
+        /* Ignora falha silenciosa fora do host */
+      }
+    }
+
+    async function loadPersistentState() {
+      const api = window.notebookAppApi;
+      if (!api || typeof api.getAppState !== `function`) return;
+      try {
+        const saved = await api.getAppState();
+        if (!saved || typeof saved !== `object`) return;
+        if ([6, 8, 12, 22].includes(saved.pairsCount)) {
+          appState.pairsCount = saved.pairsCount;
+        }
+        if (Array.isArray(saved.unlockedIds)) {
+          appState.unlockedIds = saved.unlockedIds.filter(id => Number.isInteger(id) && id >= 1 && id <= 22);
+        }
+        if (Number.isInteger(saved.activeArcanoId) && saved.activeArcanoId >= 1 && saved.activeArcanoId <= 22) {
+          appState.activeArcanoId = saved.activeArcanoId;
+        }
+        if ([`all`, `unlocked`, `locked`].includes(saved.codexFilter)) {
+          appState.codexFilter = saved.codexFilter;
+        }
+      } catch (err) {
+        /* Fallback padrão */
+      }
+    }
+
+    /* =========================================================================
+       CRONÔMETRO & TELEMETRIA
+       ========================================================================= */
+    function formatTime(totalSec) {
+      const m = String(Math.floor(totalSec / 60)).padStart(2, `0`);
+      const s = String(totalSec % 60).padStart(2, `0`);
+      return `${m}:${s}`;
+    }
+
+    function stopTimer() {
+      if (appState.timerHandle) {
+        clearInterval(appState.timerHandle);
+        appState.timerHandle = null;
+      }
+    }
+
+    function startTimerIfNeeded() {
+      if (appState.gameStarted) return;
+      appState.gameStarted = true;
+      appState.timerHandle = setInterval(function () {
+        appState.seconds += 1;
+        const timerEl = document.getElementById(`stat-timer`);
+        if (timerEl) timerEl.textContent = formatTime(appState.seconds);
+      }, 1000);
+    }
+
+    function updateTelemetry() {
+      const pairsEl = document.getElementById(`stat-pairs`);
+      const movesEl = document.getElementById(`stat-moves`);
+      const timerEl = document.getElementById(`stat-timer`);
+      const codexBadge = document.getElementById(`codex-progress-badge`);
+
+      if (pairsEl) pairsEl.textContent = `${appState.matchedIds.length} / ${appState.pairsCount}`;
+      if (movesEl) movesEl.textContent = String(appState.moves);
+      if (timerEl) timerEl.textContent = formatTime(appState.seconds);
+      if (codexBadge) codexBadge.textContent = `Desvelados: ${appState.unlockedIds.length} / 22`;
+    }
+
+    function setBoardStatus(htmlMsg, stateType) {
+      const textEl = document.getElementById(`board-status-text`);
+      const dotEl = document.getElementById(`status-dot`);
+      if (textEl) textEl.innerHTML = htmlMsg;
+      if (dotEl) {
+        dotEl.classList.remove(`is-match`, `is-win`);
+        if (stateType === `match`) dotEl.classList.add(`is-match`);
+        if (stateType === `win`) dotEl.classList.add(`is-win`);
+      }
+    }
+
+    /* =========================================================================
+       TABULEIRO DE JOGO
+       ========================================================================= */
+    function syncModeButtons() {
+      const btns = document.querySelectorAll(`[data-pairs]`);
+      btns.forEach(btn => {
+        const val = Number(btn.getAttribute(`data-pairs`));
+        btn.classList.toggle(`is-active`, val === appState.pairsCount);
+      });
+    }
+
+    function setBoardMode(pairs) {
+      if (![6, 8, 12, 22].includes(pairs)) return;
+      appState.pairsCount = pairs;
+      syncModeButtons();
+      startNewGame();
+      savePersistentState();
+    }
+
+    function startNewGame() {
+      stopTimer();
+      appState.flippedIndices = [];
+      appState.matchedIds = [];
+      appState.moves = 0;
+      appState.seconds = 0;
+      appState.isLocked = false;
+      appState.gameStarted = false;
+
+      const selectedIds = selectArcanosForRound(appState.pairsCount);
+      const rawDeck = [];
+      selectedIds.forEach(id => {
+        rawDeck.push({ arcanoId: id, uid: `${id}-a` });
+        rawDeck.push({ arcanoId: id, uid: `${id}-b` });
+      });
+      appState.deck = shuffleArray(rawDeck);
+
+      renderBoard();
+      updateTelemetry();
+      setBoardStatus(`Vire duas cartas para iniciar. Cada par combinado exibe seu arcano abaixo.`, `idle`);
+    }
+
+    function renderBoard() {
+      const grid = document.getElementById(`memory-grid`);
+      if (!grid) return;
+
+      const geo = getGridGeometry(appState.pairsCount);
+      const isNarrow = window.innerWidth <= 768;
+      const cols = isNarrow && appState.pairsCount >= 12 ? 4 : geo.cols;
+      const rows = isNarrow && appState.pairsCount >= 12 ? Math.ceil((appState.pairsCount * 2) / 4) : geo.rows;
+
+      grid.style.setProperty(`--grid-cols`, String(cols));
+      grid.style.setProperty(`--grid-rows`, String(rows));
+      grid.style.setProperty(`--grid-max-w`, geo.maxW);
+
+      let html = ``;
+      appState.deck.forEach((card, index) => {
+        const arc = ARCANOS.find(a => a.id === card.arcanoId);
+        if (!arc) return;
+        const isMatched = appState.matchedIds.includes(card.arcanoId);
+        const isFlipped = appState.flippedIndices.includes(index);
+        const isSelectedMatch = isMatched && appState.activeArcanoId === card.arcanoId;
+        const classes = [
+          `tarot-card`,
+          isFlipped ? `is-flipped` : ``,
+          isMatched ? `is-matched` : ``,
+          isSelectedMatch ? `is-selected-match` : ``
+        ].filter(Boolean).join(` `);
+
+        const label = isMatched || isFlipped
+          ? (isMatched
+              ? `Arcano ${ARCANO_ROMANO[arc.id]} — ${NOMES_ARCANOS[arc.id]}`
+              : `Arcano desconhecido`)
+          : `Carta oculta ${index + 1}`;
+        const tooltip = `Arcano ${ARCANO_ROMANO[arc.id]} · ${NOMES_ARCANOS[arc.id]}`;
+        const tooltipAttr = isMatched
+          ? `data-tooltip="${tooltip}"`
+          : `data-tooltip="?"`;
+
+        html += `
+          <button
+            type="button"
+            class="${classes}"
+            data-index="${index}"
+            ${tooltipAttr}
+            onclick="handleCardClick(${index})"
+            aria-label="${label}"
+            aria-pressed="${isFlipped || isMatched ? `true` : `false`}">
+            <span class="card-face card-back">
+              <span class="card-back-inner">
+                ${renderCardBackSvg()}
+                <span class="card-back-mark">Arcano</span>
+              </span>
+            </span>
+            <span class="card-face card-front">
+              <span class="card-front-art">${renderArcanoSvg(arc.id, true)}</span>
+            </span>
+          </button>
+        `;
+      });
+
+      grid.innerHTML = html;
+    }
+
+    function handleCardClick(index) {
+      const cardData = appState.deck[index];
+      if (!cardData) return;
+
+      /* Se a carta já faz parte de um par combinado, seleciona seu arcano na dobra inferior */
+      if (appState.matchedIds.includes(cardData.arcanoId)) {
+        selectAndShowArcano(cardData.arcanoId, false);
+        const arc = ARCANOS.find(a => a.id === cardData.arcanoId);
+        if (arc) {
+          setBoardStatus(`<strong>${arc.numero} — ${arc.titulo}</strong> selecionado para leitura na dobra inferior.`, `match`);
+        }
+        return;
+      }
+
+      if (appState.isLocked) return;
+      if (appState.flippedIndices.includes(index)) return;
+
+      startTimerIfNeeded();
+      appState.flippedIndices.push(index);
+
+      const cardBtn = document.querySelector(`.tarot-card[data-index="${index}"]`);
+      if (cardBtn) {
+        cardBtn.classList.add(`is-flipped`);
+        cardBtn.setAttribute(`aria-pressed`, `true`);
+        const arc = ARCANOS.find(a => a.id === cardData.arcanoId);
+        if (arc) {
+          cardBtn.setAttribute(`aria-label`, `Arcano desconhecido`);
+          cardBtn.setAttribute(`data-tooltip`, `?`);
+        } else {
+          cardBtn.setAttribute(`aria-label`, `Arcano desconhecido`);
+          cardBtn.setAttribute(`data-tooltip`, `?`);
+        }
+      }
+
+      if (appState.flippedIndices.length === 2) {
+        appState.moves += 1;
+        updateTelemetry();
+        evaluatePair();
+      }
+    }
+
+    function evaluatePair() {
+      const idxA = appState.flippedIndices[0];
+      const idxB = appState.flippedIndices[1];
+      const cardA = appState.deck[idxA];
+      const cardB = appState.deck[idxB];
+      if (!cardA || !cardB) return;
+
+      if (cardA.arcanoId === cardB.arcanoId) {
+        const matchedId = cardA.arcanoId;
+        appState.matchedIds.push(matchedId);
+        if (!appState.unlockedIds.includes(matchedId)) {
+          appState.unlockedIds.push(matchedId);
+          appState.unlockedIds.sort((a, b) => a - b);
+        }
+        appState.flippedIndices = [];
+
+        selectAndShowArcano(matchedId, true);
+        updateTelemetry();
+
+        const arc = ARCANOS.find(a => a.id === matchedId);
+        if (appState.matchedIds.length === appState.pairsCount) {
+          stopTimer();
+          if (arc) {
+            setBoardStatus(`<strong>Ciclo concluído em ${appState.moves} jogadas (${formatTime(appState.seconds)})!</strong> Último par: ${arc.numero} — role abaixo para ler a síntese.`, `win`);
+          }
+        } else if (arc) {
+          setBoardStatus(`Par combinado: <strong>${arc.numero} — ${arc.titulo}</strong>. Significado e síntese exibidos na dobra inferior.`, `match`);
+        }
+
+        renderBoard();
+        savePersistentState();
+      } else {
+        appState.isLocked = true;
+        const elA = document.querySelector(`.tarot-card[data-index="${idxA}"]`);
+        const elB = document.querySelector(`.tarot-card[data-index="${idxB}"]`);
+        if (elA) elA.classList.add(`is-mismatch`);
+        if (elB) elB.classList.add(`is-mismatch`);
+
+        const arcA = ARCANOS.find(a => a.id === cardA.arcanoId);
+        const arcB = ARCANOS.find(a => a.id === cardB.arcanoId);
+        if (arcA && arcB) {
+          setBoardStatus(`Cartuchos distintos (${arcA.numero} e ${arcB.numero}). Observe os símbolos e tente novamente.`, `idle`);
+        }
+
+        setTimeout(function () {
+          if (elA) {
+            elA.classList.remove(`is-flipped`, `is-mismatch`);
+            elA.setAttribute(`aria-pressed`, `false`);
+            elA.setAttribute(`aria-label`, `Carta oculta ${idxA + 1}`);
+            elA.setAttribute(`data-tooltip`, ``);
+          }
+          if (elB) {
+            elB.classList.remove(`is-flipped`, `is-mismatch`);
+            elB.setAttribute(`aria-pressed`, `false`);
+            elB.setAttribute(`aria-label`, `Carta oculta ${idxB + 1}`);
+            elB.setAttribute(`data-tooltip`, ``);
+          }
+          appState.flippedIndices = [];
+          appState.isLocked = false;
+        }, 880);
+      }
+    }
+
+    /* =========================================================================
+       SEGUNDA DOBRA: EXPLICAÇÃO DETALHADA, SÍNTESE E CÓDICE
+       ========================================================================= */
+    function selectAndShowArcano(id, fromMatch) {
+      appState.activeArcanoId = id;
+      renderActiveArcano(fromMatch);
+      renderCodex();
+      if (fromMatch) renderBoard();
+    }
+
+    function inspectArcano(id) {
+      selectAndShowArcano(id, false);
+      savePersistentState();
+      const panel = document.getElementById(`active-arcano-panel`);
+      if (panel) {
+        panel.scrollIntoView({ behavior: `smooth`, block: `nearest` });
+      }
+    }
+
+    function renderActiveArcano(fromMatch) {
+      const panel = document.getElementById(`active-arcano-panel`);
+      if (!panel) return;
+
+      if (!appState.activeArcanoId) {
+        panel.innerHTML = `
+          <div class="reading-empty" id="reading-empty-state">
+            <span class="badge">Aguardando Combinação</span>
+            <h3>Nenhum arcano selecionado ainda</h3>
+            <p>
+              Combine duas cartas idênticas no tabuleiro superior para desvelar automaticamente o arcano correspondente nesta área. Você também pode clicar em qualquer carta já combinada no tabuleiro ou escolher um arcano no Códice abaixo para estudar sua síntese.
+            </p>
+            <div class="reading-nav">
+              <button type="button" class="btn btn-primary" onclick="scrollToBoard()">Jogar no Tabuleiro</button>
+              <button type="button" class="btn btn-sky" onclick="inspectArcano(1)">Explorar Tarot nº 1</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const arc = ARCANOS.find(a => a.id === appState.activeArcanoId);
+      if (!arc) return;
+
+      const isUnlocked = appState.unlockedIds.includes(arc.id);
+      const statusBadge = isUnlocked
+        ? `<span class="badge badge-positive">Desvelado no Jogo</span>`
+        : `<span class="badge">Leitura de Estudo</span>`;
+      const matchHint = fromMatch
+        ? `<span class="badge badge-brass">Par Recém-Combinado</span>`
+        : ``;
+
+      const prevId = arc.id > 1 ? arc.id - 1 : 22;
+      const nextId = arc.id < 22 ? arc.id + 1 : 1;
+
+      const symbolsHtml = arc.simbolos.map(s => `<li>${s}</li>`).join(``);
+      const paragraphsHtml = arc.explicacao.map(p => `<p>${p}</p>`).join(``);
+
+      panel.innerHTML = `
+        <div class="reading-visual">
+          <div class="reading-cartouche-box">
+            ${renderArcanoSvg(arc.id, false)}
+          </div>
+          <div class="reading-meta-list">
+            <div class="meta-row">
+              <span>Arcano</span>
+              <span>Arcano ${ARCANO_ROMANO[arc.id]} · ${arc.numero}</span>
+            </div>
+            <div class="meta-row">
+              <span>Nome</span>
+              <span>${NOMES_ARCANOS[arc.id]}</span>
+            </div>
+            <div class="meta-row">
+              <span>Regência</span>
+              <span>${arc.regencia}</span>
+            </div>
+            <div class="meta-row">
+              <span>Glifo</span>
+              <span>${arc.glyph}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="reading-content">
+          <div class="reading-head">
+            <div class="reading-badges">
+              ${statusBadge}
+              ${matchHint}
+              <span class="coord-label">${arc.numero} · ${arc.regencia}</span>
+            </div>
+            <h3 class="title reading-title">${NOMES_ARCANOS[arc.id]}</h3>
+          </div>
+
+          <div class="synthesis-callout">
+            <p class="deck-brass">Síntese do Arcano</p>
+            <p>${arc.sintese}</p>
+          </div>
+
+          <div class="symbols-block">
+            <h4>Elementos do Cartucho</h4>
+            <ul class="symbol-chips">${symbolsHtml}</ul>
+          </div>
+
+          <div class="explanation-block">
+            <h4>Explicação Simbólica</h4>
+            ${paragraphsHtml}
+          </div>
+
+          <div class="reading-nav">
+            <button type="button" class="btn" onclick="inspectArcano(${prevId})">← Tarot nº ${prevId}</button>
+            <button type="button" class="btn" onclick="inspectArcano(${nextId})">Tarot nº ${nextId} →</button>
+            <button type="button" class="btn btn-primary" onclick="scrollToBoard()">Voltar ao Tabuleiro ↑</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function setCodexFilter(filter) {
+      appState.codexFilter = filter;
+      const btns = document.querySelectorAll(`[data-filter]`);
+      btns.forEach(btn => {
+        btn.classList.toggle(`is-active`, btn.getAttribute(`data-filter`) === filter);
+      });
+      renderCodex();
+      savePersistentState();
+    }
+
+    function renderCodex() {
+      const grid = document.getElementById(`codex-grid`);
+      if (!grid) return;
+
+      const filtered = ARCANOS.filter(arc => {
+        const unlocked = appState.unlockedIds.includes(arc.id);
+        if (appState.codexFilter === `unlocked`) return unlocked;
+        if (appState.codexFilter === `locked`) return !unlocked;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        const emptyTitle = appState.codexFilter === `unlocked`
+          ? `Nenhum arcano desvelado no tabuleiro ainda.`
+          : `Todos os 22 arcanos já foram desvelados!`;
+        const emptyAction = appState.codexFilter === `unlocked`
+          ? `<button type="button" class="btn btn-primary" onclick="scrollToBoard()">Jogar para Desvelar</button>`
+          : `<button type="button" class="btn" onclick="setCodexFilter('all')">Ver Todos (22)</button>`;
+        grid.innerHTML = `
+          <div class="panel" style="grid-column: 1 / -1;">
+            <p style="margin: 0 0 var(--space-md); color: var(--on-surface-variant);">${emptyTitle}</p>
+            ${emptyAction}
+          </div>
+        `;
+        return;
+      }
+
+      let html = ``;
+      filtered.forEach(arc => {
+        const isUnlocked = appState.unlockedIds.includes(arc.id);
+        const isCurrent = appState.activeArcanoId === arc.id;
+        const classes = [
+          `codex-item`,
+          isCurrent ? `is-current` : ``,
+          !isUnlocked ? `is-veiled` : ``
+        ].filter(Boolean).join(` `);
+
+        const statusDot = isUnlocked
+          ? `<span style="color: var(--positive);">●</span>`
+          : `<span style="color: var(--secondary);">○</span>`;
+
+        html += `
+          <button type="button" class="${classes}" onclick="inspectArcano(${arc.id})" title="Arcano ${ARCANO_ROMANO[arc.id]} — ${NOMES_ARCANOS[arc.id]}" aria-label="Arcano ${ARCANO_ROMANO[arc.id]} — ${NOMES_ARCANOS[arc.id]}">
+            <span class="codex-thumb">${renderArcanoSvg(arc.id, true)}</span>
+            <span class="codex-info">
+              <span class="codex-num">${statusDot} Arcano ${ARCANO_ROMANO[arc.id]} · ${arc.numero}</span>
+              <span class="codex-name">${NOMES_ARCANOS[arc.id]}</span>
+              <span class="codex-astro">${arc.regencia}</span>
+            </span>
+          </button>
+        `;
+      });
+
+      grid.innerHTML = html;
+    }
+
+    function resetCodexProgress(btn) {
+      if (!btn) return;
+      if (btn.dataset.armed !== `true`) {
+        btn.dataset.armed = `true`;
+        btn.textContent = `Confirmar Zerar Histórico`;
+        setTimeout(function () {
+          if (btn.dataset.armed === `true`) {
+            btn.dataset.armed = `false`;
+            btn.textContent = `Zerar Histórico Desvelado`;
+          }
+        }, 4000);
+        return;
+      }
+      btn.dataset.armed = `false`;
+      btn.textContent = `Zerar Histórico Desvelado`;
+      appState.unlockedIds = [];
+      appState.activeArcanoId = null;
+      updateTelemetry();
+      renderActiveArcano(false);
+      renderCodex();
+      savePersistentState();
+      setBoardStatus(`Histórico de arcanos desvelados reiniciado. Combine pares para redescobri-los.`, `idle`);
+    }
+
+    /* =========================================================================
+       NAVEGAÇÃO SUAVE ENTRE AS DUAS DOBRAS
+       ========================================================================= */
+    function scrollToExplanation() {
+      const target = document.getElementById(`explicacao-arcanos`);
+      if (target) target.scrollIntoView({ behavior: `smooth`, block: `start` });
+    }
+
+    function scrollToBoard() {
+      const target = document.getElementById(`tabuleiro-dobra`);
+      if (target) target.scrollIntoView({ behavior: `smooth`, block: `start` });
+    }
+
+    /* =========================================================================
+       INICIALIZAÇÃO
+       ========================================================================= */
+    window.addEventListener(`resize`, function () {
+      renderBoard();
+    });
+
+    async function initApp() {
+      await loadPersistentState();
+      syncModeButtons();
+      const filterBtns = document.querySelectorAll(`[data-filter]`);
+      filterBtns.forEach(btn => {
+        btn.classList.toggle(`is-active`, btn.getAttribute(`data-filter`) === appState.codexFilter);
+      });
+      startNewGame();
+      renderActiveArcano(false);
+      renderCodex();
+      updateTelemetry();
+
+      if (window.notebookAppApi && typeof window.notebookAppApi.notifyAppReady === `function`) {
+        window.notebookAppApi.notifyAppReady();
+      }
+    }
+
+    document.addEventListener(`DOMContentLoaded`, initApp);
+  </script>
+</body>
+</html>
